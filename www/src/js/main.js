@@ -1,4 +1,3 @@
-var appFramework=new AppFramework();
-
-
-document.addEventListener("deviceready", appFramework.ready(), false);
+// at this point the device should yet ready
+// after index.html relocation
+appFramework = AppFramework.init();

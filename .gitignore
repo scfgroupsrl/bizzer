@@ -75,9 +75,15 @@ local.properties
 
 # App
 
+/config.xml
 /build/
 /platforms/
 /plugins/
 /www/usr/
+/www/src/js/custom.js
+/www/modules/*
+!/www/modules/jquery/
+!/www/modules/respondjs/
+!/www/modules/bootstrap/
 /www/conf/*
 !/www/conf/*.def.*
