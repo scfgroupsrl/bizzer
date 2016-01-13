@@ -86,3 +86,9 @@ local.properties
 !/www/modules/bootstrap/
 /www/conf/*
 !/www/conf/*.def.*
+
+
+# bizzer
+!/www/modules/bizzer/
+!/www/conf/*
+!/config.xml
