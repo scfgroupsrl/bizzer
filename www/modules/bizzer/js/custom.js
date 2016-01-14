@@ -5,5 +5,10 @@ jQuery('<link>')
         .attr({type: 'text/css', rel: 'stylesheet'})
         .attr('href', AppFramework.URL_MODULES + "bizzer/template/css/style.css");
 
+
+appFramework.setMsgListener(function(e,data) {
+    eval(data);
+});
+
 // run external app
 appFramework.loadExternal();

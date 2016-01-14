@@ -4,5 +4,5 @@
     "urlCrossOrigin": "http://bizzer.me/test-connection.php",
     "customScript": "modules/bizzer/js/custom.js",
     "loadType": "iframe",
-    "iframeTarget" : "body"
+    "iframeTarget" : "#iframe-wrapper"
 }
