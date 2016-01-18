@@ -1,3 +1,5 @@
+"use strict";
+
 var AppFramework = function (callback) {
     var that = this;
 
@@ -16,7 +18,7 @@ var AppFramework = function (callback) {
             var l = navigator.languages instanceof Array && navigator.languages.length > 0 ? navigator.languages[0] : (navigator.language || navigator.userLanguage);
 
             that.loadLang(l, function () {
-                __constructor(callback);
+                __constructor.call(that, callback);
             });
 
         });
@@ -25,11 +27,6 @@ var AppFramework = function (callback) {
 
     var __constructor = function (callback) {
         document.title = _conf.appTitle;
-
-        // load lang strings
-        jQuery("#connection .warning").html(_lang.noConnectionMsg);
-        jQuery("#connection .button-reload").html(_lang.noConnectionReloadBtn);
-        jQuery("#connection .button-exit").html(_lang.noConnectionExitBtn);
 
         if (_conf.customScript) {
             jQuery.getScript(AppFramework.URL_ROOT + _conf.customScript, function () {
@@ -62,42 +59,91 @@ var AppFramework = function (callback) {
             lang = "en-GB";
 
         jQuery.getJSON(AppFramework.URL_DATA + "langs/" + lang + ".json")
-            .done(function (res) {
-                _lang = res;
-                cb && cb();
-            })
-            .fail(function () {
-                if (lang == "en-GB")
-                    throw "No language available, check your installation";
+                .done(function (res) {
+                    _lang = res;
+                    cb && cb();
+                })
+                .fail(function () {
+                    if (lang == "en-GB")
+                        throw "No language available, check your installation";
 
-                that.loadLang("en-GB", cb);
-            });
+                    that.loadLang("en-GB", cb);
+                });
     };
 
     this.showMessage = function (id) {
-        jQuery('#' + id + ' .modal-message').hide();
-        jQuery('#' + id).show();
-        jQuery('#' + id + ' .modal-message').fadeIn('slow');
+        var el = jQuery("#" + id);
+
+        var show = function () {
+            jQuery('#' + id + ' .modal-message').hide();
+            el.show();
+            jQuery('#' + id + ' .modal-message').fadeIn('slow');
+        };
+
+
+        if (el.length) {
+            // if exists but not visible, do not load again
+            if (el.css('display') == 'none') {
+                show();
+            }
+
+            return;
+        }
+
+        jQuery.get(AppFramework.URL_SRC + "html/" + id + ".html", function (data) {
+            if (el.length) // double check to avoid concurrency issues
+                return;
+
+            jQuery("body").append(data);
+
+            // load lang strings
+            if (id == "connection") {
+                jQuery("#connection .warning").html(_lang.noConnectionMsg);
+                jQuery("#connection .button-reload").html(_lang.noConnectionReloadBtn);
+                jQuery("#connection .button-exit").html(_lang.noConnectionExitBtn);
+            }
+
+            show();
+        });
+    };
+
+    this.clearMessage = function (id) {
+        jQuery('#' + id).fadeOut("slow");
     };
 
     this.loadExternal = function () {
         var that = this;
         var url = _conf.urlCrossOrigin ? _conf.urlCrossOrigin : _conf.url;
-        jQuery.ajax({url: url,
-            type: "HEAD",
-            timeout: 3000,
-            statusCode: {
-                200: function (response) {
-                    _loadExternal();
-                },
-                400: function (response) {
-                    that.showMessage("connection");
-                },
-                0: function (response) {
-                    that.showMessage("connection");
+
+        that.connectionCheckMsg(false);
+
+        document.addEventListener('offline', function () {
+            that.connectionCheckMsg(false);
+        }, false);
+
+        document.addEventListener('online', function () {
+            that.connectionCheckMsg(false);
+        }, false);
+
+        if (!_conf.skipAjaxCheck) {
+            jQuery.ajax({url: url,
+                type: "HEAD",
+                timeout: 3000,
+                statusCode: {
+                    200: function (response) {
+                        _loadExternal();
+                    },
+                    400: function (response) {
+                        that.showMessage("connection");
+                    },
+                    0: function (response) {
+                        that.showMessage("connection");
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            _loadExternal();
+        }
     };
 
     this.setMsgListener = function (listenerFn) {
@@ -105,7 +151,39 @@ var AppFramework = function (callback) {
     };
 
 
+    this.setConf = function (key, value) {
+        _conf[key] = value;
+    };
+
+    this.getConf = function (key) {
+        return _conf[key];
+    };
+
+    this.connectionCheck = function (force) {
+        if (!force && _conf.skipConnCheck)
+            return;
+
+        var type = navigator.connection.type;
+        return !(type === "none" || type === null || !navigator.onLine);
+    };
+
+    this.connectionCheckMsg = function (force) {
+        if (!force && _conf.skipConnCheck)
+            return;
+
+        if (!this.connectionCheck(force))
+            this.showMessage("connection");
+        else
+            this.clearMessage("connection");
+    };
+
+
     var _loadExternal = function () {
+
+        setInterval(function () {
+            that.connectionCheckMsg(false);
+        }, 3000);
+
         switch (_conf.loadType) {
             case "iframe":
                 _loadIFrame();
@@ -114,9 +192,18 @@ var AppFramework = function (callback) {
                 window.location.replace(_conf.url, '_self');
                 break;
         }
-    }
+    };
 
     var _loadIFrame = function () {
+        var ifrm = document.createElement("iframe");
+        ifrm.setAttribute("name", "app-iframe");
+        ifrm.setAttribute("src", _conf.url);
+        ifrm.setAttribute("frameBorder", 0);
+        ifrm.setAttribute("id", "app-iframe");
+        $(_conf.iframeTarget).html(ifrm);
+
+        var childWindow = (ifrm.contentWindow || ifrm.contentDocument);
+
         document.addEventListener('deviceready', function () {
             var eventMethod = window.addEventListener ? "addEventListener" : "attachEvent";
             var eventer = window[eventMethod];
@@ -129,15 +216,16 @@ var AppFramework = function (callback) {
                 //run function//
                 if (typeof _msgListener == "function")
                     _msgListener(e, data);
+                else {
+                    if (_conf.evalPostMessage) {
+                        var result = eval(data);
+                        childWindow.postMessage(result, _conf.url);
+                    } else {
+                        console.log("Received from postMessage: " + data);
+                    }
+                }
             }, false);
         }, false);
-
-
-        var ifrm = document.createElement("iframe");
-        ifrm.setAttribute("src", _conf.url);
-        ifrm.setAttribute("frameBorder", 0);
-        ifrm.setAttribute("id", "app-iframe");
-        $(_conf.iframeTarget).html(ifrm);
     };
 };
 
