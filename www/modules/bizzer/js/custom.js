@@ -11,4 +11,17 @@ appFramework.setMsgListener(function(e,data) {
 });
 
 // run external app
-appFramework.loadExternal();
+appFramework.loadExternal({
+    onReady: function () {
+        var iframe = jQuery("#iframe-wrapper");
+
+        // just 2 tricks to make fading working on android:
+        // 1) use css instead of jquery fade
+        // 2) set a small timeout after iframe ready before "launche" the animation ( workaround )
+        window.setTimeout(function () {
+            iframe.addClass("fade-in");
+            jQuery("#wrapper-table").remove();
+        }, 500);
+
+    }
+});

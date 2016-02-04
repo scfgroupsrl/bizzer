@@ -8,6 +8,7 @@
         Lenus Media
     </author>
     <icon src="logo.png" />
+    <content src="src/main.html" />
     <preference name="permissions" value="none" />
     <preference name="orientation" value="portrait" />
     <preference name="target-device" value="universal" />
