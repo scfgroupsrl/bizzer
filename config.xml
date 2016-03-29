@@ -8,11 +8,7 @@
         Lenus Media
     </author>
     <icon src="logo.png" />
-
-    <icon src="www/data/res/icons/ios/icon.png" />
-
     <platform name="ios">
-
         <!-- iPhone 6 / 6+ -->
         <icon src="www/data/res/icons/ios/icon-60-3x.png" platform="ios" width="180" height="180" />
 
@@ -48,7 +44,6 @@
         <icon src="www/data/res/icons/ios/icon-50.png" platform="ios" width="50" height="50" />
         <icon src="www/data/res/icons/ios/icon-50-2x.png" platform="ios" width="100" height="100" />
 
-
     </platform>
 
 
@@ -80,7 +75,7 @@
     <gap:plugin name="cordova-plugin-media" source="npm" />
     <gap:plugin name="cordova-plugin-network-information" source="npm" />
     <gap:plugin name="cordova-plugin-splashscreen" source="npm" />
-    <gap:plugin name="cordova-plugin-whitelist" source="npm" />
+    <gap:plugin name="cordova-plugin-whitelist" source="npm" version="1.0.0" />
     <access origin="*" />
     <allow-navigation href="*" />
     <allow-intent href="http://*/*" />
